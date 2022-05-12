@@ -1,0 +1,104 @@
+---
+# tasks file for ansible_cool_lab_app
+- name: get service facts
+  ansible.builtin.service_facts:
+
+- name: "Make sure {{ cool_lab_app_group }} group exist"
+  ansible.builtin.group:
+    name: "{{ cool_lab_app_group }}"
+    state: present
+
+- name: "Make sure {{ cool_lab_app_user }} user exist"
+  ansible.builtin.user:
+    name: "{{ cool_lab_app_user }}"
+    group: "{{ cool_lab_app_group }}"
+    state: present
+
+- name: Make sure required packages are installed
+  ansible.builtin.package:
+    name: "{{ item }}"
+  loop:
+    - git
+    - python3
+    - python3-virtualenv
+
+- name: Make sure installation directory exist 
+  ansible.builtin.file:
+    path: "{{ cool_lab_app_install_dir }}/{{ cool_lab_app_name }}"
+    state: directory
+    mode: 0755
+    owner: "{{ cool_lab_app_user }}"
+    group: "{{ cool_lab_app_group }}"
+
+- name: Deploy application from git
+  ansible.builtin.git:
+    repo: "{{ cool_lab_app_repo }}"
+    dest: "{{ cool_lab_app_install_dir }}/{{ cool_lab_app_name }}"
+    version: "{{ cool_lab_app_version }}"
+  become: true
+  become_method: su
+  become_user: "{{ cool_lab_app_user }}"
+  register: app_code
+  notify:
+    - "Restarted {{ cool_lab_app_name }}"
+
+- name: Make sure required python packages are installed
+  ansible.builtin.pip:
+    requirements: "{{ cool_lab_app_install_dir }}/{{ cool_lab_app_name }}/requirements.txt"
+    virtualenv: "{{ cool_lab_app_virtualenv }}"
+    virtualenv_python: python3
+  become: true
+  become_method: su
+  become_user: "{{ cool_lab_app_user }}"
+
+- name: Make db migrations
+  community.general.django_manage:
+    command: "migrate"
+    project_path: "{{ cool_lab_app_install_dir }}/{{ cool_lab_app_name }}"
+    virtualenv: "{{ cool_lab_app_virtualenv }}"
+  when: app_code.changed
+
+- name: Check if django superuser exists
+  community.general.django_manage:
+    command: shell -c 'import sys; from django.contrib.auth.models import User; print(User.objects.filter(username="{{ cool_lab_app_superuser_name }}").count())'
+    project_path: "{{ cool_lab_app_install_dir }}/{{ cool_lab_app_name }}"
+    virtualenv: "{{ cool_lab_app_virtualenv }}"
+  when: app_code.changed
+  register: checksuperuser
+  ignore_errors: True
+  changed_when: False 
+
+- name: Create an initial superuser
+  community.general.django_manage:
+    command: "createsuperuser --noinput --username={{ cool_lab_app_superuser_name }} --email={{ cool_lab_app_superuser_name }}@example.com"
+    project_path: "{{ cool_lab_app_install_dir }}/{{ cool_lab_app_name }}"
+    virtualenv: "{{ cool_lab_app_virtualenv }}"
+  when: app_code.changed and checksuperuser.out|trim == "0"
+  changed_when: True
+  ignore_errors: True
+
+- name: Make sure required firewalld rules are in place
+  ansible.builtin.firewalld:
+    port: "{{ item }}"
+    state: enabled
+    permanent: true
+    immediate: true
+  when: ansible_facts.services["firewalld.service"] is defined
+  with_items:
+    - "{{ cool_lab_app_port }}"
+
+
+###########################################
+#
+# WARNING: The Djano development server used in this role is useful for testing, 
+# but to run an app in production you'll want to set up a Web Server Gateway Interface (WSGI) server and a proxy
+#
+###########################################
+- name: Make sure {{ cool_lab_app_name }} systemd unit file exist
+  ansible.builtin.template:
+    src: templates/service.j2
+    dest: "/lib/systemd/system/{{ cool_lab_app_name }}.service"
+    mode: "0644"
+  notify:
+    - "Start {{ cool_lab_app_name }}"
+  

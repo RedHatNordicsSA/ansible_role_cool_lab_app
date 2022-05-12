@@ -1,0 +1,29 @@
+---
+stages:
+  - test
+
+before_script:
+  - rm -fr ../${CI_PROJECT_NAME}_molecule_venv
+  - python3.8 -m venv ../${CI_PROJECT_NAME}_molecule_venv
+  - source ../${CI_PROJECT_NAME}_molecule_venv/bin/activate
+  - pip3.8 install -U pip
+  - if [ ${ANSIBLE_VERSION} != "latest" ]; then pip3 install ansible==${ANSIBLE_VERSION}; fi
+  - pip3.8 install -r ci_requirements.txt
+  - ansible-galaxy collection install containers.podman
+  - ansible-galaxy collection install community.general
+
+standard_checks_ansible:
+  stage: test
+  variables:
+    PY_COLORS: '1'
+    ANSIBLE_FORCE_COLOR: '1'
+    GIT_SUBMODULE_STRATEGY: recursive
+  script:
+    - molecule test
+  parallel:
+    matrix:
+      - ANSIBLE_VERSION: ["2.9", "latest"]
+  tags:
+    - shell
+  #only:
+  #  - merge_requests

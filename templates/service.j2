@@ -1,0 +1,14 @@
+[Unit]
+Description=Cool Lab App
+After=network.target
+
+[Service]
+Type=simple
+User={{ cool_lab_app_user }}
+Group={{ cool_lab_app_group }}
+WorkingDirectory={{ cool_lab_app_install_dir }}/{{ cool_lab_app_name }}
+ExecStart={{ cool_lab_app_virtualenv }}/bin/python3 manage.py runserver 0.0.0.0:{{ cool_lab_app_port }}
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,8 @@
+testinfra
+molecule
+ansible-lint
+yamllint
+selinux
+flake8
+molecule[lint]
+molecule[podman]

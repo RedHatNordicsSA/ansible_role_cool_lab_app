@@ -1,0 +1,25 @@
+---
+- name: "{{ cool_lab_app_install_dir }}/{{ cool_lab_app_name }} - retrieve information from path"
+  ansible.builtin.stat:
+    path: "{{ cool_lab_app_install_dir }}/{{ cool_lab_app_name }}"
+  register: directory
+  tags: verify
+
+- name: "Assert that directory {{ cool_lab_app_install_dir }}/{{ cool_lab_app_name }} is created correctly"
+  ansible.builtin.assert:
+    that:
+      - "directory.stat.exists"
+      - "directory.stat.isdir"
+  tags: verify
+
+- name: "{{ cool_lab_app_install_dir }}/{{ cool_lab_app_name }}/ manage.py - retrieve information from path"
+  ansible.builtin.stat:
+    path: "{{ cool_lab_app_install_dir }}/{{ cool_lab_app_name }}/manage.py"
+  register: directory
+  tags: verify
+
+- name: "Assert that file {{ cool_lab_app_install_dir }}/{{ cool_lab_app_name }}/manage.py is created correctly"
+  ansible.builtin.assert:
+    that:
+      - "directory.stat.exists"
+  tags: verify

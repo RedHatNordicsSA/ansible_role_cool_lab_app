@@ -1,0 +1,14 @@
+---
+# This is an example playbook to execute Ansible tests.
+
+- name: Verify
+  hosts: all
+  gather_facts: false
+  tasks:
+  - name: Include vars from role
+    ansible.builtin.include_vars:
+      file: ../../defaults/main.yml
+
+  - name: "Include pgustafs.ansible_cool_lab_app"
+    ansible.builtin.include_tasks:
+      file: ../../tasks/verify.yml
