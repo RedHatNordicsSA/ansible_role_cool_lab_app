@@ -36,7 +36,7 @@
     dest: "{{ cool_lab_app_install_dir }}/{{ cool_lab_app_name }}"
     version: "{{ cool_lab_app_version }}"
   become: true
-  become_method: su
+  #become_method: su
   become_user: "{{ cool_lab_app_user }}"
   register: app_code
   notify:
@@ -48,7 +48,7 @@
     virtualenv: "{{ cool_lab_app_virtualenv }}"
     virtualenv_python: python3
   become: true
-  become_method: su
+  #become_method: su
   become_user: "{{ cool_lab_app_user }}"
 
 - name: Make db migrations
