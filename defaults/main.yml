@@ -6,6 +6,7 @@ cool_lab_app_name: cool_lab_app
 cool_lab_app_install_dir: /srv
 cool_lab_app_virtualenv: "{{ cool_lab_app_install_dir }}/{{ cool_lab_app_name }}/django-venv"
 cool_lab_app_repo: http://rh-gitlab.cool.lab/pgustafs/cool-lab-app.git
-cool_lab_app_port: 8000
+cool_lab_app_port:
+  - "8000/tcp"
 cool_lab_app_superuser_name: admin
 cool_lab_app_version: 0.0.1
