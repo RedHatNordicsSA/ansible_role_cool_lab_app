@@ -3,6 +3,11 @@
 - name: get service facts
   ansible.builtin.service_facts:
 
+- name: "Ensure SELinux in permissive mode (do not tell Dan)"
+  ansible.builtin.selinux:
+    policy: targeted
+    state: permissive
+
 - name: "Make sure {{ cool_lab_app_group }} group exist"
   ansible.builtin.group:
     name: "{{ cool_lab_app_group }}"
